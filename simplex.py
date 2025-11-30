@@ -1,16 +1,13 @@
 #!/usr/bin/python3
-from string import whitespace, digits, ascii_letters
 from enum import Enum, auto
 from fractions import Fraction
-import numpy as np
-from tabulate import tabulate
-import sys
 
 class ReadExpressionState(Enum):
     Coefficient = auto(),
     Name = auto()
 
 def read_expression(s: str):
+    from string import whitespace, digits, ascii_letters
     state = ReadExpressionState.Coefficient
     numerator = 1
     denominator = 1
@@ -117,11 +114,13 @@ def print_row_operation(coefficient, out_i, current_i):
     print(f"Used basic row operation R{current_i} = R{current_i} {coefficient}R{out_i+1}")
 
 def print_table(function, constraints_c, names, tablefmt):
+    from tabulate import tabulate
     constraints_show = [[str(item) for item in constraint]  for constraint in constraints_c ]
     function_show = list(map(str, function))
     print(tabulate([function_show]+constraints_show, headers=names, tablefmt=tablefmt, floatfmt="#"))
 
 def solve_simplex_and_print_tables(data, args):
+    import numpy as np
     kind, function_name, function, constraints = data
     if kind == "max":
         hasnt_ended = lambda f: min(f) < 0
