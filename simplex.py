@@ -23,7 +23,7 @@ def read_expression(s: str):
                 if s[i] == '-':
                     numerator=-1
                 elif s[i] == '+':
-                    denominator=1
+                    numerator=1
                 else:
                     numerator_str = ""
                     denominator_str = ""
@@ -162,6 +162,7 @@ def solve_simplex_and_print_tables(data, args):
                     print_row_operation(constraint[in_variable], out_variable, i+1)
                 constraints_c[i] = constraint - (constraints_c[out_variable] * constraint[in_variable])
     print_table(function, constraints_c, names, args.tablefmt)
+    return function[-1]
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
