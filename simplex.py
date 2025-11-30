@@ -116,12 +116,12 @@ def print_row_operation(coefficient, out_i, current_i):
         coefficient = f"- {coefficient}" 
     print(f"Used basic row operation R{current_i} = R{current_i} {coefficient}R{out_i+1}")
 
-def print_table(function, constraints_c, names):
+def print_table(function, constraints_c, names, tablefmt):
     constraints_show = [[str(item) for item in constraint]  for constraint in constraints_c ]
     function_show = list(map(str, function))
-    print(tabulate([function_show]+constraints_show, headers=names, tablefmt="simple_grid", floatfmt="#"))
+    print(tabulate([function_show]+constraints_show, headers=names, tablefmt=tablefmt, floatfmt="#"))
 
-def solve_simplex_and_print_tables(data):
+def solve_simplex_and_print_tables(data, args):
     kind, function_name, function, constraints = data
     if kind == "max":
         hasnt_ended = lambda f: min(f) < 0
@@ -138,40 +138,51 @@ def solve_simplex_and_print_tables(data):
 
     function = function*-1
     while hasnt_ended(function):
-        print_table(function, constraints_c, names)
+        print_table(function, constraints_c, names, args.tablefmt)
         in_variable = in_variable_function(function)
         try:
             out_variable, _ = min(((i,constraint) for i,constraint in enumerate(constraints_c) if constraint[in_variable] > 0), key=choose_out(in_variable))
         except ValueError:
-            print(f"Function {function_name} is unbounded ({function_name} -> {'+' if kind == 'max' else '-'}∞)")
+            if not args.table_only:
+                print(f"Function {function_name} is unbounded ({function_name} -> {'+' if kind == 'max' else '-'}∞)")
             return 
-        print(f"Selected col {in_variable} ({names[in_variable]}) to be entered")
-        print(f"Selected row {out_variable+1} to be exited")
+        if not args.table_only:
+            print(f"Selected col {in_variable} ({names[in_variable]}) to be entered")
+            print(f"Selected row {out_variable+1} to be exited")
         divide_value = [constraints_c[out_variable][in_variable]][0]
         if divide_value != 1:
             constraints_c[out_variable]=constraints_c[out_variable]/divide_value
-            print(f"Used basic row operation R{out_variable+1} = R{out_variable+1}/{divide_value}")
-        print_row_operation(function[in_variable], out_variable, 0)
+            if not args.table_only:
+                print(f"Used basic row operation R{out_variable+1} = R{out_variable+1}/{divide_value}")
+        if not args.table_only:
+            print_row_operation(function[in_variable], out_variable, 0)
         function = function - (constraints_c[out_variable] * function[in_variable])
         for i,constraint in enumerate(constraints_c):
             if i != out_variable:
-                print_row_operation(constraint[in_variable], out_variable, i+1)
+                if not args.table_only:
+                    print_row_operation(constraint[in_variable], out_variable, i+1)
                 constraints_c[i] = constraint - (constraints_c[out_variable] * constraint[in_variable])
-    print_table(function, constraints_c, names)
+    print_table(function, constraints_c, names, args.tablefmt)
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
+    from argparse import ArgumentParser
+    parser = ArgumentParser(prog="simplex.py", description="a simple simplex solver for unix nerds")
+    parser.add_argument("filenames", nargs="*", help="files to process simplex from. each file is considered a simplex")
+    parser.add_argument("--table-only", action="store_true", help="only print tables. don't be verbose about operations, selections and failures")
+    parser.add_argument("--tablefmt", default="simple_grid", help="table format. for all possible formats check https://pypi.org/project/tabulate")
+    args = parser.parse_args()
+    if len(args.filenames) == 0:
         import fileinput
         stdin_string = ""
         for line in fileinput.input():
             stdin_string+=line
-        solve_simplex_and_print_tables(simplex_data(stdin_string))
+        solve_simplex_and_print_tables(simplex_data(stdin_string), args)
     else:
-        has_multiple_files = len(sys.argv) > 2
-        for i,arg in enumerate(sys.argv[1:]):
+        has_multiple_files = len(args.filenames) > 1
+        for i,arg in enumerate(args.filenames):
             if has_multiple_files:
                 if i != 0:
                     print()
                 print(f"Solving {arg}:")
             with open(arg) as fp:
-                solve_simplex_and_print_tables(simplex_data(fp.read()))
+                solve_simplex_and_print_tables(simplex_data(fp.read()), args)
