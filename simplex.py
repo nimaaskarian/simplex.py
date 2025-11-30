@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from string import whitespace, digits
+from string import whitespace, digits, ascii_letters
 from enum import Enum, auto
 from fractions import Fraction
 import numpy as np
@@ -12,7 +12,8 @@ class ReadExpressionState(Enum):
 
 def read_expression(s: str):
     state = ReadExpressionState.Coefficient
-    coefficient = 1
+    numerator = 1
+    denominator = 1
     coefficients = []
     names = []
     i = 0
@@ -23,17 +24,26 @@ def read_expression(s: str):
         match state:
             case ReadExpressionState.Coefficient:
                 if s[i] == '-':
-                    coefficient*=-1
+                    numerator=-1
                 elif s[i] == '+':
-                    coefficient=1
+                    denominator=1
                 else:
-                    coefficient_str = ""
-                    while s[i] in digits:
-                        coefficient_str+=s[i]
+                    numerator_str = ""
+                    denominator_str = ""
+                    while i < len(s) and s[i] in digits:
+                        numerator_str+=s[i]
                         i+=1
-                    if coefficient_str:
-                        coefficient *= Fraction(coefficient_str)
-                    state = ReadExpressionState.Name
+                    if s[i] == "/":
+                        i+=1
+                        while i < len(s) and s[i] in digits:
+                            denominator_str+=s[i]
+                            i+=1
+                    if numerator_str:
+                        numerator *= int(numerator_str)
+                    if denominator_str:
+                        denominator *= int(denominator_str)
+                    if s[i] in ascii_letters:
+                        state = ReadExpressionState.Name
                     continue
             case ReadExpressionState.Name:
                 name = ""
@@ -44,9 +54,10 @@ def read_expression(s: str):
                     name+=s[i]
                     i+=1
                 if name:
-                    coefficients.append(coefficient)
+                    coefficients.append(Fraction(numerator, denominator))
                     names.append(name)
-                    coefficient=1
+                    numerator=1
+                    denominator=1
                     state = ReadExpressionState.Coefficient
                 continue
         i+=1
@@ -80,9 +91,9 @@ def simplex_data(s: str):
     for i in range(len(constraints)):
         slack_name=f"s{i+1}"
         function[0].append(slack_name)
-        function[1].append(0)
+        function[1].append(Fraction(0))
         constraints[i][0][0].append(slack_name)
-        constraints[i][0][1].append(1)
+        constraints[i][0][1].append(Fraction(1))
         for j in range(len(constraints)):
             if j != i:
                 constraints[j][0][0].append(slack_name)
@@ -112,6 +123,13 @@ def print_table(function, constraints_c, names):
 
 def solve_simplex_and_print_tables(data):
     kind, function_name, function, constraints = data
+    if kind == "max":
+        hasnt_ended = lambda f: min(f) < 0
+        in_variable_function = np.argmin
+    else:
+        hasnt_ended = lambda f: max(f) > 0
+        in_variable_function = np.argmax
+
     constraints_c = []
     names = function[0]+["RHS"]
     for i, constraint in enumerate(constraints):
@@ -119,10 +137,14 @@ def solve_simplex_and_print_tables(data):
     function = np.array(function[1]+[0])
 
     function = function*-1
-    while max(function) > 0:
+    while hasnt_ended(function):
         print_table(function, constraints_c, names)
-        in_variable = np.argmax(function)
-        out_variable, _ = min(((i,constraint) for i,constraint in enumerate(constraints_c) if constraint[in_variable] > 0), key=choose_out(in_variable))
+        in_variable = in_variable_function(function)
+        try:
+            out_variable, _ = min(((i,constraint) for i,constraint in enumerate(constraints_c) if constraint[in_variable] > 0), key=choose_out(in_variable))
+        except ValueError:
+            print(f"Function {function_name} is unbounded ({function_name} -> {'+' if kind == 'max' else '-'}∞)")
+            return 
         print(f"Selected col {in_variable} ({names[in_variable]}) to be entered")
         print(f"Selected row {out_variable+1} to be exited")
         divide_value = [constraints_c[out_variable][in_variable]][0]
@@ -137,19 +159,19 @@ def solve_simplex_and_print_tables(data):
                 constraints_c[i] = constraint - (constraints_c[out_variable] * constraint[in_variable])
     print_table(function, constraints_c, names)
 
-args = sys.argv[1:]
-if len(args) == 0:
-    import fileinput
-    stdin_string = ""
-    for line in fileinput.input():
-        stdin_string+=line
-    solve_simplex_and_print_tables(simplex_data(stdin_string))
-
-
-else:
-    has_multiple_files = len(args) > 1
-    for arg in args:
-        if has_multiple_files:
-            print("running", arg)
-        with open(arg) as fp:
-            solve_simplex_and_print_tables(simplex_data(fp.read()))
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        import fileinput
+        stdin_string = ""
+        for line in fileinput.input():
+            stdin_string+=line
+        solve_simplex_and_print_tables(simplex_data(stdin_string))
+    else:
+        has_multiple_files = len(sys.argv) > 2
+        for i,arg in enumerate(sys.argv[1:]):
+            if has_multiple_files:
+                if i != 0:
+                    print()
+                print(f"Solving {arg}:")
+            with open(arg) as fp:
+                solve_simplex_and_print_tables(simplex_data(fp.read()))
