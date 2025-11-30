@@ -169,7 +169,7 @@ if __name__ == "__main__":
     parser = ArgumentParser(prog="simplex.py", description="a simple simplex solver for unix nerds")
     parser.add_argument("filenames", nargs="*", help="files to process simplex from. each file is considered a simplex")
     parser.add_argument("--table-only", action="store_true", help="only print tables. don't be verbose about operations, selections and failures")
-    parser.add_argument("--tablefmt", default="simple_grid", help="table format. for all possible formats check https://pypi.org/project/tabulate")
+    parser.add_argument("--tablefmt", default="simple_outline", help="table format. for all possible formats check https://pypi.org/project/tabulate")
     args = parser.parse_args()
     if len(args.filenames) == 0:
         import fileinput

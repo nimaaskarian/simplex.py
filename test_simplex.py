@@ -54,7 +54,7 @@ class TestSolveSimplex(unittest.TestCase):
     def test_min_solvable(self):
         from collections import namedtuple
         Args = namedtuple('Args', ['table_only', 'tablefmt', 'html'])
-        args = Args(table_only=False, tablefmt="simple_grid", html=False)
+        args = Args(table_only=False, tablefmt="simple_outline", html=False)
         self.assertEqual(Fraction(-29, 5), solve_simplex_and_print_tables(("min", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-5), Fraction(0), Fraction(0), Fraction(0)]), [
                      ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6)),
                      ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1)),
