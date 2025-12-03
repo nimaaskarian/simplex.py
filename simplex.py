@@ -58,7 +58,11 @@ def read_expression(s: str):
                     state = ReadExpressionState.Coefficient
                 continue
         i+=1
-    return (names, coefficients)
+    names_coefficients = sorted(zip(names, coefficients))
+    sorted_names = [name for name,_ in names_coefficients]
+    sorted_coefficients = [coefficient for _,coefficient in names_coefficients]
+
+    return (sorted_names, sorted_coefficients)
 
 def simplex_data(s: str):
     lines = s.splitlines()
@@ -78,11 +82,10 @@ def simplex_data(s: str):
         for i,constraint in enumerate(constraints):
             if variable_name not in constraint[0][0]:
                 insert_index=len(constraints[i][0][0])
-                for j,item in enumerate(constraints[i][0][0]):
+                for j in range(len(constraints[i][0][0])-1, -1, -1):
+                    item = constraints[i][0][0][j]
                     if variable_name < item:
                         insert_index=j
-                    else:
-                        break
                 constraints[i][0][0].insert(insert_index, variable_name)
                 constraints[i][0][1].insert(insert_index, 0)
     for i in range(len(constraints)):
