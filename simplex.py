@@ -64,8 +64,18 @@ def read_expression(s: str):
 
     return (sorted_names, sorted_coefficients)
 
+def process_constraints(constraints):
+    for constraint in constraints:
+        for sep in ("<=", ">=", "="):
+            if sep in constraint:
+                expression, value = map(str.strip, constraint.split(sep))
+                yield (read_expression(expression), Fraction(value), sep)
+                break
+        else:
+            raise Exception(f'Constraint type not detected in constraint "{constraint}"')
+
 def simplex_data(s: str):
-    lines = list(filter(lambda line: not line.strip().startswith("#"), s.splitlines()))
+    lines = list(filter(lambda line: line.strip() and not line.strip().startswith("#"), s.splitlines()))
     kind, function = lines[0].split(" ",1)
     kind = kind[:3].lower()
     if kind not in ["max", "min"]:
@@ -76,8 +86,8 @@ def simplex_data(s: str):
     except ValueError:
         function_name = "z"
     function = read_expression(function)
-    constraints = [[item.strip() for item in constraint.split("<=")] for constraint in lines[1:]]
-    constraints = [(read_expression(expression), Fraction(value)) for expression, value in constraints]
+    constraints = list(process_constraints(lines[1:]))
+    print(constraints)
     for variable_name in function[0]:
         for i,constraint in enumerate(constraints):
             if variable_name not in constraint[0][0]:

@@ -21,21 +21,24 @@ class TestSimplexData(unittest.TestCase):
 3x + 2y <= 6
 -x + y <= 1
 x+2y <= 5"""),("min", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-5), Fraction(0), Fraction(0), Fraction(0)]), [
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5)),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6),"<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1),"<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5),"<="),
                          ] ))
 
-    def test_comment(self):
+    def test_comment_and_empty_line(self):
         self.assertEqual(simplex_data("""min 4x-5y 
 3x + 2y <= 6
 # this is a very long comment.
+
+   
+	   
 -x + y <= 1
   # 4x + 10y <= 1
 x+2y <= 5"""),("min", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-5), Fraction(0), Fraction(0), Fraction(0)]), [
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5)),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6),"<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1),"<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5),"<="),
                          ] ))
 
     def test_not_defined_variable_constraints(self):
@@ -43,9 +46,9 @@ x+2y <= 5"""),("min", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-
 2y <= 6
 -x <= 1
 x+2y <= 5"""),("min", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-5), Fraction(0), Fraction(0), Fraction(0)]), [
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(0),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(0), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5)),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(0),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6), "<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(0), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1), "<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5), "<="),
                          ] ))
 
     def test_max(self):
@@ -53,9 +56,9 @@ x+2y <= 5"""),("min", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-
 3x + 2y <= 6
 -x + y <= 1
 x+2y <= 5"""),("max", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-5), Fraction(0), Fraction(0), Fraction(0)]), [
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5)),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6), "<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1), "<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5), "<="),
                          ] ))
     def test_wrong_kind(self):
         self.assertRaises(Exception,simplex_data, """nima 4x-5y 
@@ -69,7 +72,7 @@ class TestSolveSimplex(unittest.TestCase):
         Args = namedtuple('Args', ['table_only', 'tablefmt', 'html'])
         args = Args(table_only=False, tablefmt="simple_outline", html=False)
         self.assertEqual(Fraction(-29, 5), solve_simplex_and_print_tables(("min", "z", (["x", "y", "s1", "s2","s3"], [Fraction(4),Fraction(-5), Fraction(0), Fraction(0), Fraction(0)]), [
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1)),
-                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5)),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(3),Fraction(2), Fraction(1), Fraction(0), Fraction(0)]), Fraction(6), "<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(-1),Fraction(1), Fraction(0), Fraction(1), Fraction(0)]), Fraction(1), "<="),
+                     ((["x", "y", "s1", "s2","s3"], [Fraction(1),Fraction(2), Fraction(0), Fraction(0), Fraction(1)]), Fraction(5), "<="),
                          ] ), args))
