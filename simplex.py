@@ -65,7 +65,7 @@ def read_expression(s: str):
     return (sorted_names, sorted_coefficients)
 
 def simplex_data(s: str):
-    lines = s.splitlines()
+    lines = list(filter(lambda line: not line.strip().startswith("#"), s.splitlines()))
     kind, function = lines[0].split(" ",1)
     kind = kind[:3].lower()
     if kind not in ["max", "min"]:
@@ -151,7 +151,7 @@ def solve_simplex_and_print_tables(data, args):
         if not args.table_only:
             print(f"Selected col {in_variable} ({names[in_variable]}) to be entered")
             print(f"Selected row {out_variable+1} to be exited")
-        divide_value = [constraints_c[out_variable][in_variable]][0]
+        divide_value = constraints_c[out_variable][in_variable]
         if divide_value != 1:
             constraints_c[out_variable]=constraints_c[out_variable]/divide_value
             if not args.table_only:
@@ -165,6 +165,15 @@ def solve_simplex_and_print_tables(data, args):
                     print_row_operation(constraint[in_variable], out_variable, i+1)
                 constraints_c[i] = constraint - (constraints_c[out_variable] * constraint[in_variable])
     print_table(function, constraints_c, names, args.tablefmt)
+    for i,z in enumerate(function):
+        if z == 0:
+            if sum(constraint[i] for constraint in constraints_c) != 1:
+                try:
+                    out_variable, _ = min(((j,constraint) for j,constraint in enumerate(constraints_c) if constraint[i] > 0), key=choose_out(i))
+                    print(f"Col {i} ({names[i]}) can be entered as well, to produce the same output.")
+                    print(f"That way row {out_variable+1} would exit")
+                except ValueError:
+                    break
     return function[-1]
 
 if __name__ == "__main__":
